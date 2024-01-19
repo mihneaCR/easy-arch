@@ -306,9 +306,9 @@ sgdisk -Zo "$DISK" &>/dev/null
 info_print "Creating the partitions on $DISK."
 parted -s "$DISK" \
     mklabel gpt \
-    mkpart ESP fat32 1MiB 513MiB \
+    mkpart ESP fat32 1MiB 1025MiB \
     set 1 esp on \
-    mkpart CRYPTROOT 513MiB 100% \
+    mkpart CRYPTROOT 1025MiB 100% \
 
 ESP="/dev/disk/by-partlabel/ESP"
 CRYPTROOT="/dev/disk/by-partlabel/CRYPTROOT"
@@ -334,7 +334,7 @@ mount "$BTRFS" /mnt
 
 # Creating BTRFS subvolumes.
 info_print "Creating BTRFS subvolumes."
-subvols=(snapshots var_pkgs var_log home root srv)
+subvols=(var_pkgs .snapshots usr_local var_log home opt root srv tmp)
 for subvol in '' "${subvols[@]}"; do
     btrfs su cr /mnt/@"$subvol" &>/dev/null
 done
@@ -344,12 +344,11 @@ umount /mnt
 info_print "Mounting the newly created subvolumes."
 mountopts="ssd,noatime,compress-force=zstd:3,discard=async"
 mount -o "$mountopts",subvol=@ "$BTRFS" /mnt
-mkdir -p /mnt/{home,root,srv,.snapshots,var/{log,cache/pacman/pkg},boot}
-for subvol in "${subvols[@]:2}"; do
+mkdir -p /mnt/{home,opt,root,srv,tmp,.snapshots,var/{log,cache/pacman/pkg},boot,usr/local}
+for subvol in "${subvols[@]:1}"; do
     mount -o "$mountopts",subvol=@"$subvol" "$BTRFS" /mnt/"${subvol//_//}"
 done
 chmod 750 /mnt/root
-mount -o "$mountopts",subvol=@snapshots "$BTRFS" /mnt/.snapshots
 mount -o "$mountopts",subvol=@var_pkgs "$BTRFS" /mnt/var/cache/pacman/pkg
 chattr +C /mnt/var/log
 mount "$ESP" /mnt/boot/
@@ -424,7 +423,7 @@ arch-chroot /mnt /bin/bash -e <<EOF
     chmod 750 /.snapshots
 
     # Installing GRUB.
-    grub-install --target=x86_64-efi --efi-directory=/boot/ --bootloader-id=GRUB &>/dev/null
+    grub-install --target=x86_64-efi --removable --efi-directory=/boot/ --bootloader-id=GRUB &>/dev/null
 
     # Creating grub config file.
     grub-mkconfig -o /boot/grub/grub.cfg &>/dev/null
