@@ -344,9 +344,10 @@ umount /mnt
 info_print "Mounting the newly created subvolumes."
 mountopts="ssd,noatime,compress-force=zstd:3,discard=async"
 mount -o "$mountopts",subvol=@ "$BTRFS" /mnt
-mkdir -p /mnt/{home,opt,root,srv,tmp,.snapshots,var/{log,cache/pacman/pkg,spool,tmp},boot,usr/local}
+mkdir -p /mnt/{.snapshots,home,opt,root,srv,tmp,usr/local,var/{log,cache/pacman/pkg,spool,tmp},boot}
 for subvol in "${subvols[@]}"; do
-    mount -o "$mountopts",subvol=@"$subvol" "$BTRFS" /mnt/"${subvol//_//}"
+	echo "$subvol"
+    mount -o "$mountopts",subvol=@"$subvol" "$BTRFS" /mnt/"$subvol"
 done
 chmod 750 /mnt/root
 chattr +C /mnt/var/log
