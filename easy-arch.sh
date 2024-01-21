@@ -342,9 +342,18 @@ btrfs su cr /mnt/@
 btrfs su list /mnt
 mkdir -p /mnt/@/{var/cache/pacman,usr}
 subvols=(snapshots home opt root srv var/cache/pacman/pkg var/log var/spool usr/local)
-for subvol in "${subvols[@]}"; do
-    btrfs su cr /mnt/@/"$subvol"
-done
+btrfs su cr /mnt/@/.snapshots
+btrfs su cr /mnt/@/home
+btrfs su cr /mnt/@/opt
+btrfs su cr /mnt/@/root
+btrfs su cr /mnt/@/srv
+mkdir /mnt/@/var/
+btrfs su cr /mnt/@/var/cache
+btrfs su cr /mnt/@/
+
+# for subvol in "${subvols[@]}"; do
+#     btrfs su cr /mnt/@/"$subvol"
+# done
 ## TODO: remove
 btrfs subvolume list /mnt
 read -r -p "Press enter to continue"
