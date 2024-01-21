@@ -422,16 +422,16 @@ arch-chroot /mnt /bin/bash -e <<EOF
     umount /.snapshots
     rm -r /.snapshots
     snapper --no-dbus -c root create-config /
-    btrfs subvolume delete /@/.snapshots &>/dev/null
+    btrfs subvolume delete /@/.snapshots
     mkdir /.snapshots
-    mount -a &>/dev/null
+    mount -a
     chmod 750 /.snapshots
 
     # Installing GRUB.
-    grub-install --target=x86_64-efi --removable --efi-directory=/boot/ --bootloader-id=GRUB &>/dev/null
+    grub-install --target=x86_64-efi --removable --efi-directory=/boot/ --bootloader-id=GRUB
 
     # Creating grub config file.
-    grub-mkconfig -o /boot/grub/grub.cfg &>/dev/null
+    grub-mkconfig -o /boot/grub/grub.cfg
 
 EOF
 
