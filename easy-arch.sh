@@ -342,12 +342,6 @@ for subvol in "${subvols[@]}"; do
     btrfs su cr /mnt/@/"$subvol"
 done
 
-# subvols_nested=(var/cache/pacman/pkg var/log var/spool usr/local)
-# for subvol in "${subvols_nested[@]}"; do
-# 		mkdir -p /mnt/"$subvol"
-#     btrfs su cr /mnt/@/"$subvol"
-# done
-# Mounting the newly created subvolumes.
 umount /mnt
 info_print "Mounting the newly created subvolumes."
 mountopts="ssd,noatime,compress-force=zstd:3,discard=async"
@@ -356,15 +350,7 @@ mkdir -p /mnt/{home,opt,root,srv,.snapshots,var/{log,cache/pacman/pkg,spool},usr
 for subvol in "${subvols[@]}"; do
     mount -o "$mountopts",subvol=@/"$subvol" "$BTRFS" /mnt/"$subvol"
 done
-# for subvol in "${subvols[@]:5}"; do
-#     mount -o "$mountopts",subvol=@"$subvol" "$BTRFS" /mnt/"${subvol//_//}"
-# done
 chmod 750 /mnt/root
-# mount -o "$mountopts",subvol=@.snapshots "$BTRFS" /mnt/.snapshots
-# mount -o "$mountopts",subvol=@var/spool "$BTRFS" /mnt/var/spool
-# mount -o "$mountopts",subvol=@var/log "$BTRFS" /mnt/var/log
-# mount -o "$mountopts",subvol=@usr/local "$BTRFS" /mnt/usr/local
-# mount -o "$mountopts",subvol=@var/cache/pacman/pkg "$BTRFS" /mnt/var/cache/pacman/pkg
 chattr +C /mnt/var/log
 mount "$ESP" /mnt/boot/
 
@@ -373,7 +359,7 @@ microcode_detector
 
 # Pacstrap (setting up a base sytem onto the new root).
 info_print "Installing the base system (it may take a while)."
-pacstrap -K /mnt base "$kernel" "$microcode" linux-firmware "$kernel"-headers btrfs-progs grub grub-btrfs rsync efibootmgr snapper reflector snap-pac zram-generator sudo &>/dev/null
+pacstrap -K /mnt base "$kernel" "$microcode" linux-firmware "$kernel"-headers btrfs-progs grub grub-btrfs rsync efibootmgr snapper reflector snap-pac zram-generator sudo
 
 # Setting up the hostname.
 echo "$hostname" > /mnt/etc/hostname
