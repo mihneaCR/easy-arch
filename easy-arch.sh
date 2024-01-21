@@ -354,9 +354,12 @@ info_print "Mounting the newly created subvolumes."
 mountopts="ssd,noatime,compress-force=zstd:3,discard=async"
 mount -o "$mountopts",subvol=@ "$BTRFS" /mnt
 mkdir -p /mnt/{home,opt,root,srv,.snapshots,var/{log,cache/pacman/pkg,spool},usr/local,boot}
-for subvol in "${subvols[@]}"; do
+for subvol in "${subvols[@]:1}"; do
     mount -o "$mountopts",subvol=@/"$subvol" "$BTRFS" /mnt/"$subvol"
 done
+mount -o "$mountopts",subvol=@/snapshots "$BTRFS" /mnt/.snapshots
+btrfs subvol list /mnt
+read -r -p "Press enter to continue"
 chmod 750 /mnt/root
 chattr +C /mnt/var/log
 mount "$ESP" /mnt/boot/
