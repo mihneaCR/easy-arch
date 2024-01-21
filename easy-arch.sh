@@ -336,7 +336,7 @@ mount "$BTRFS" /mnt
 info_print "Creating BTRFS subvolumes."
 btrfs su cr /mnt/@
 btrfs su list /mnt
-subvols=(.snapshots home opt root srv var/cache/pacman/pkg var/log var/spool usr/local)
+subvols=(.snapshots home opt root srv var\/cache\/pacman\/pkg var\/log var\/spool usr\/local)
 for subvol in "${subvols[@]}"; do
     btrfs su cr /mnt/@/"$subvol"
 done
