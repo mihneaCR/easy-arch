@@ -410,6 +410,7 @@ sed -i "\,^GRUB_CMDLINE_LINUX=\"\",s,\",&rd.luks.name=$UUID=cryptroot root=$BTRF
 
 # Configuring the system.
 info_print "Configuring the system (timezone, system clock, initramfs, Snapper, GRUB)."
+arch-chroot /mnt
 arch-chroot /mnt /bin/bash -e <<EOF
 
     # Setting up timezone.
