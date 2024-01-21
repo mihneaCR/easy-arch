@@ -336,17 +336,23 @@ mount "$BTRFS" /mnt
 info_print "Creating BTRFS subvolumes."
 btrfs su cr /mnt/@
 btrfs su list /mnt
-subvols=(.snapshots home opt root srv var\/cache\/pacman\/pkg var\/log var\/spool usr\/local)
+# mkdir -p /mnt/{home,opt,root,srv,.snapshots,var/{log,cache/pacman/pkg,spool},usr/local,boot}
+subvols=(.snapshots home opt root srv var/cache/pacman/pkg var/log var/spool usr/local)
 for subvol in "${subvols[@]}"; do
+		mkdir -p /mnt/"$subvol"
     btrfs su cr /mnt/@/"$subvol"
 done
 
+# subvols_nested=(var/cache/pacman/pkg var/log var/spool usr/local)
+# for subvol in "${subvols_nested[@]}"; do
+# 		mkdir -p /mnt/"$subvol"
+#     btrfs su cr /mnt/@/"$subvol"
+# done
 # Mounting the newly created subvolumes.
 umount /mnt
 info_print "Mounting the newly created subvolumes."
 mountopts="ssd,noatime,compress-force=zstd:3,discard=async"
 mount -o "$mountopts",subvol=@ "$BTRFS" /mnt
-mkdir -p /mnt/{home,opt,root,srv,.snapshots,var/{log,cache/pacman/pkg,spool},usr/local,boot}
 for subvol in "${subvols[@]}"; do
     mount -o "$mountopts",subvol=@/"$subvol" "$BTRFS" /mnt/"$subvol"
 done
