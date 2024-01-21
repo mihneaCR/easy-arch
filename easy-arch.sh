@@ -345,6 +345,9 @@ subvols=(.snapshots home opt root srv var/cache/pacman/pkg var/log var/spool usr
 for subvol in "${subvols[@]}"; do
     btrfs su cr /mnt/@/"$subvol"
 done
+## TODO: remove
+btrfs subvolume list /mnt
+read -r -p "Press enter to continue"
 
 umount /mnt
 info_print "Mounting the newly created subvolumes."
@@ -422,7 +425,7 @@ arch-chroot /mnt /bin/bash -e <<EOF
     # umount /.snapshots
     # rm -r /.snapshots
     # snapper --no-dbus -c root create-config /
-    # btrfs subvolume delete /@/.snapshots
+    # btrfs subvolume delete .snapshots
     # mkdir /.snapshots
     # mount -a
     # chmod 750 /.snapshots
