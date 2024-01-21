@@ -301,6 +301,8 @@ fi
 info_print "Wiping $DISK."
 wipefs -af "$DISK" &>/dev/null
 sgdisk -Zo "$DISK" &>/dev/null
+
+info_print "Updating archlinux-keyring."
 timedatectl &>/dev/null
 pacman -Sy archlinux-keyring &>/dev/null
 
