@@ -304,7 +304,7 @@ sgdisk -Zo "$DISK" &>/dev/null
 
 info_print "Updating archlinux-keyring."
 timedatectl &>/dev/null
-pacman -Sy archlinux-keyring &>/dev/null
+pacman -Sy archlinux-keyring
 
 # Creating a new partition scheme.
 info_print "Creating the partitions on $DISK."
