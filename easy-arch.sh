@@ -418,23 +418,23 @@ arch-chroot /mnt /bin/bash -e <<EOF
     # Generating a new initramfs.
     mkinitcpio -P &>/dev/null
 
-    # Snapper configuration.
-    umount /.snapshots
-    rm -r /.snapshots
-    snapper --no-dbus -c root create-config /
-    btrfs subvolume delete /@/.snapshots
-    mkdir /.snapshots
-    mount -a
-    chmod 750 /.snapshots
-
-    # Installing GRUB.
-    grub-install --target=x86_64-efi --removable --efi-directory=/boot/ --bootloader-id=GRUB
-
-    # Creating grub config file.
-    grub-mkconfig -o /boot/grub/grub.cfg
+    # # Snapper configuration.
+    # umount /.snapshots
+    # rm -r /.snapshots
+    # snapper --no-dbus -c root create-config /
+    # btrfs subvolume delete /@/.snapshots
+    # mkdir /.snapshots
+    # mount -a
+    # chmod 750 /.snapshots
+    #
+    # # Installing GRUB.
+    # grub-install --target=x86_64-efi --removable --efi-directory=/boot/ --bootloader-id=GRUB
+    #
+    # # Creating grub config file.
+    # grub-mkconfig -o /boot/grub/grub.cfg
 
 EOF
-
+arch-chroot /mnt
 # Setting root password.
 info_print "Setting root password."
 echo "root:$rootpass" | arch-chroot /mnt chpasswd
