@@ -301,7 +301,7 @@ fi
 info_print "Wiping $DISK."
 wipefs -af "$DISK" &>/dev/null
 sgdisk -Zo "$DISK" &>/dev/null
-timedatectl "$DISK" &>/dev/null
+timedatectl &>/dev/null
 pacman -Sy archlinux-keyring &>/dev/null
 
 # Creating a new partition scheme.
