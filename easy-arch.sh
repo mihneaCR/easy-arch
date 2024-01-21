@@ -336,10 +336,7 @@ mount "$BTRFS" /mnt
 info_print "Creating BTRFS subvolumes."
 btrfs su cr /mnt/@
 btrfs su list /mnt
-subvols=(snapshots var_pkgs var_spool var_log usr_local home opt root srv)
-for subvol in "${subvols[@]}"; do
-    echo '/mnt/@/' "$subvol"
-done
+subvols=(.snapshots var_pkgs var_spool var_log usr_local home opt root srv)
 for subvol in "${subvols[@]}"; do
     btrfs su cr /mnt/@/"$subvol"
 done
@@ -350,11 +347,14 @@ info_print "Mounting the newly created subvolumes."
 mountopts="ssd,noatime,compress-force=zstd:3,discard=async"
 mount -o "$mountopts",subvol=@ "$BTRFS" /mnt
 mkdir -p /mnt/{home,opt,root,srv,.snapshots,var/{log,cache/pacman/pkg,spool},usr/local,boot}
-for subvol in "${subvols[@]:2}"; do
+for subvol in "${subvols[@]:5}"; do
     mount -o "$mountopts",subvol=@"$subvol" "$BTRFS" /mnt/"${subvol//_//}"
 done
 chmod 750 /mnt/root
-mount -o "$mountopts",subvol=@snapshots "$BTRFS" /mnt/.snapshots
+mount -o "$mountopts",subvol=@.snapshots "$BTRFS" /mnt/.snapshots
+mount -o "$mountopts",subvol=@var_spool "$BTRFS" /mnt/var/spool
+mount -o "$mountopts",subvol=@var_log "$BTRFS" /mnt/var/log
+mount -o "$mountopts",subvol=@usr_local "$BTRFS" /mnt/usr/local
 mount -o "$mountopts",subvol=@var_pkgs "$BTRFS" /mnt/var/cache/pacman/pkg
 chattr +C /mnt/var/log
 mount "$ESP" /mnt/boot/
