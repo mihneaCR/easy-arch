@@ -301,6 +301,7 @@ fi
 info_print "Wiping $DISK."
 wipefs -af "$DISK" &>/dev/null
 sgdisk -Zo "$DISK" &>/dev/null
+timedatectl "$DISK" &>/dev/null
 
 # Creating a new partition scheme.
 info_print "Creating the partitions on $DISK."
@@ -418,7 +419,7 @@ arch-chroot /mnt /bin/bash -e <<EOF
     umount /.snapshots
     rm -r /.snapshots
     snapper --no-dbus -c root create-config /
-    btrfs subvolume delete /.snapshots &>/dev/null
+    btrfs subvolume delete /@/.snapshots &>/dev/null
     mkdir /.snapshots
     mount -a &>/dev/null
     chmod 750 /.snapshots
