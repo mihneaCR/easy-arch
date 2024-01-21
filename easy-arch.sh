@@ -334,9 +334,10 @@ mount "$BTRFS" /mnt
 
 # Creating BTRFS subvolumes.
 info_print "Creating BTRFS subvolumes."
+btrfs su cr /mnt/@/ &>/dev/null
 subvols=(snapshots var_pkgs var_spool var_log usr_local home opt root srv)
 for subvol in '' "${subvols[@]}"; do
-    btrfs su cr /mnt/@"$subvol" &>/dev/null
+    btrfs su cr /mnt/@/"$subvol" &>/dev/null
 done
 
 # Mounting the newly created subvolumes.
