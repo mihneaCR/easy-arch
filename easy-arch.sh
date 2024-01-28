@@ -336,48 +336,79 @@ info_print "Formatting the LUKS container as BTRFS."
 mkfs.btrfs "$BTRFS" &>/dev/null
 mount "$BTRFS" /mnt
 
-# Creating BTRFS subvolumes.
-info_print "Creating BTRFS subvolumes."
-btrfs su cr /mnt/@
-btrfs su list /mnt
-mkdir -p /mnt/@/{var/cache/pacman,usr}
-subvols=(snapshots home opt root srv var/cache/pacman/pkg var/log var/spool usr/local)
-btrfs su cr /mnt/@/.snapshots
-btrfs su cr /mnt/@/home
-btrfs su cr /mnt/@/opt
-btrfs su cr /mnt/@/root
-btrfs su cr /mnt/@/srv
-mkdir /mnt/@/var/
-btrfs su cr /mnt/@/var/cache
-btrfs su cr /mnt/@/
+# Creating BTRFS subecho "Creating BTRFS subvolumes."
+btrfs su cr /mnt/@ &>/dev/null
+btrfs su cr /mnt/@/.snapshots &>/dev/null
+mkdir -p /mnt/@/.snapshots/1 &>/dev/null
+btrfs su cr /mnt/@/.snapshots/1/snapshot &>/dev/null
+btrfs su cr /mnt/@/home &>/dev/null
+btrfs su cr /mnt/@/root &>/dev/null
+btrfs su cr /mnt/@/srv &>/dev/null
+btrfs su cr /mnt/@/var_log &>/dev/null
+btrfs su cr /mnt/@/var_log_journal &>/dev/null
+btrfs su cr /mnt/@/var_crash &>/dev/null
+btrfs su cr /mnt/@/var_cache &>/dev/null
+btrfs su cr /mnt/@/var_tmp &>/dev/null
+btrfs su cr /mnt/@/var_spool &>/dev/null
+btrfs su cr /mnt/@/var_lib_libvirt_images &>/dev/null
+btrfs su cr /mnt/@/var_lib_machines &>/dev/null
 
-# for subvol in "${subvols[@]}"; do
-#     btrfs su cr /mnt/@/"$subvol"
-# done
-## TODO: remove
-btrfs subvolume list /mnt
-read -r -p "Press enter to continue"
+chattr +C /mnt/@/srv
+chattr +C /mnt/@/var_log
+chattr +C /mnt/@/var_log_journal
+chattr +C /mnt/@/var_crash
+chattr +C /mnt/@/var_cache
+chattr +C /mnt/@/var_tmp
+chattr +C /mnt/@/var_spool
+chattr +C /mnt/@/var_lib_libvirt_images
+chattr +C /mnt/@/var_lib_machines
 
+#Set the default BTRFS Subvol to Snapshot 1 before pacstrapping
+btrfs subvolume set-default "$(btrfs subvolume list /mnt | grep "@/.snapshots/1/snapshot" | grep -oP '(?<=ID )[0-9]+')" /mnt
+
+cat << EOF >> /mnt/@/.snapshots/1/info.xml
+<?xml version="1.0"?>
+<snapshot>
+  <type>single</type>
+  <num>1</num>
+  <date>1999-03-31 0:00:00</date>
+  <description>First Root Filesystem</description>
+  <cleanup>number</cleanup>
+</snapshot>
+EOF
+
+chmod 600 /mnt/@/.snapshots/1/info.xml
+
+# Mounting the newly created subvolumes.
 umount /mnt
-info_print "Mounting the newly created subvolumes."
-mountopts="ssd,noatime,compress-force=zstd:3,discard=async"
-mount -o "$mountopts",subvol=@ "$BTRFS" /mnt
-## TODO: remove
-btrfs subvolume list /mnt
-read -r -p "Press enter to continue"
-mkdir -p /mnt/{home,opt,root,srv,.snapshots,var/{log,cache/pacman/pkg,spool},usr/local,boot}
-for subvol in "${subvols[@]:1}"; do
-    mount -o "$mountopts",subvol=@/"$subvol" "$BTRFS" /mnt/"$subvol"
-done
-## TODO: remove
-btrfs subvolume list /mnt
-read -r -p "Press enter to continue"
-mount -o "$mountopts",subvol=@/snapshots "$BTRFS" /mnt/.snapshots
-btrfs subvol list /mnt
-read -r -p "Press enter to continue"
-chmod 750 /mnt/root
-chattr +C /mnt/var/log
-mount "$ESP" /mnt/boot/
+echo "Mounting the newly created subvolumes."
+mount -o ssd,noatime,space_cache,compress=zstd:15 $BTRFS /mnt
+mkdir -p /mnt/{root,home,.snapshots,srv,tmp,/var/log,/var/crash,/var/cache,/var/tmp,/var/spool,/var/lib/libvirt/images,/var/lib/machines}
+mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodev,nosuid,subvol=@/root $BTRFS /mnt/root
+mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodev,nosuid,subvol=@/home $BTRFS /mnt/home
+mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,subvol=@/.snapshots $BTRFS /mnt/.snapshots
+mount -o ssd,noatime,space_cache=v2.autodefrag,compress=zstd:15,discard=async,subvol=@/srv $BTRFS /mnt/srv
+mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_log $BTRFS /mnt/var/log
+
+# Toolbox (https://github.com/containers/toolbox) needs /var/log/journal to have dev, suid, and exec, Thus I am splitting the subvolume. Need to make the directory after /mnt/var/log/ has been mounted.
+mkdir -p /mnt/var/log/journal
+mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,subvol=@/var_log_journal $BTRFS /mnt/var/log/journal
+
+mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_crash $BTRFS /mnt/var/crash
+mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_cache $BTRFS /mnt/var/cache
+
+# Pamac needs /var/tmp to have exec. Thus I am not adding that flag.
+# I am considering including pacmac-flatpak-gnome AUR package by default, since I am its maintainer.
+mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,subvol=@/var_tmp $BTRFS /mnt/var/tmp
+
+mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_spool $BTRFS /mnt/var/spool
+mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_lib_libvirt_images $BTRFS /mnt/var/lib/libvirt/images
+mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_lib_machines $BTRFS /mnt/var/lib/machines
+
+# The encryption is splitted as we do not want to include it in the backup with snap-pac.
+
+mount "$ESP" /mnt/boot/volumes.
+
 
 # Checking the microcode to install.
 microcode_detector
@@ -392,6 +423,7 @@ echo "$hostname" > /mnt/etc/hostname
 # Generating /etc/fstab.
 info_print "Generating a new fstab."
 genfstab -U /mnt >> /mnt/etc/fstab
+sed -i 's#,subvolid=258,subvol=/@/.snapshots/1/snapshot,subvol=@/.snapshots/1/snapshot##g' /mnt/etc/fstab
 
 # Configure selected locale and console keymap
 sed -i "/^#$locale/s/^#//" /mnt/etc/locale.gen
@@ -422,6 +454,8 @@ EOF
 info_print "Setting up grub config."
 UUID=$(blkid -s UUID -o value $CRYPTROOT)
 sed -i "\,^GRUB_CMDLINE_LINUX=\"\",s,\",&rd.luks.name=$UUID=cryptroot root=$BTRFS," /mnt/etc/default/grub
+sed -i 's#rootflags=subvol=${rootsubvol}##g' /mnt/etc/grub.d/10_linux
+sed -i 's#rootflags=subvol=${rootsubvol}##g' /mnt/etc/grub.d/20_linux_xen
 
 # Configuring the system.
 info_print "Configuring the system (timezone, system clock, initramfs, Snapper, GRUB)."
